@@ -5,7 +5,7 @@ A Swift command line tool that parses `xcresulttool` JSON output and report on i
 ## Example Usage
 
 ```
-xcrun xcresulttool get --format json --path MyProject.xcresult | xcresult-issues --format github-actions
+xcrun xcresulttool get --format json --path MyProject.xcresult | xcresult-issues --format github-actions-logging
 ```
 
-The above command takes the results written out by `xcresulttool` and formats them for GitHub Actions.
+The above command takes the results written out by `xcresulttool` and formats them as log messages for GitHub Actions.

@@ -1,5 +1,5 @@
 included:
-  Source
+  Sources
 
 disabled_rules:
   - let_var_whitespace
@@ -80,7 +80,7 @@ opt_in_rules:
   - yoda_condition
 
 file_header:
-  required_pattern: (\/\/ Copyright © \d{4} Itty Bitty Apps Pty Ltd\. See LICENSE file\.|\/\/ swift-tools-version:[\d\.]+)
+  required_pattern: (\/\/ Copyright \d{4} Itty Bitty Apps Pty Ltd\. See LICENSE file\.|\/\/ swift-tools-version:[\d\.]+)
 
 identifier_name:
   excluded: [id, x, y, z, r, g, b, a, i, j, k, cx, cy, dx, dy]

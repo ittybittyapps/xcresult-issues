@@ -1,0 +1,27 @@
+name: macOS Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: macos-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-macos-macos-11-matrix:
+    runs-on: macos-11
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        xcode: ["13.2"]
+
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: swift build -c release

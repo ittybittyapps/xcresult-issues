@@ -1,4 +1,5 @@
-// Copyright © 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
+// Copyright 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
+
 import XcresultIssues
 
 // swiftlint:disable convenience_type
@@ -9,4 +10,3 @@ struct MainApp {
         XcodeIssues.main()
     }
 }
-

@@ -1,6 +1,7 @@
-// Copyright © 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
+// Copyright 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
 import ArgumentParser
 import Foundation
+// Copyright 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
 
 public struct XcodeIssues: ParsableCommand {
     public static var configuration = CommandConfiguration(
@@ -13,7 +14,7 @@ public struct XcodeIssues: ParsableCommand {
 
     enum Format: String, Decodable, ExpressibleByArgument {
         case reviewdogJSON = "reviewdog-json"
-        case githubActions = "github-actions"
+        case githubActions = "github-actions-logging"
     }
 
     @Option(
@@ -102,4 +103,3 @@ extension Diagnostic {
         )
     }
 }
-

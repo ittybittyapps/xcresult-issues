@@ -1,4 +1,4 @@
-// Copyright 2022 Itty Bitty Apps Pty Ltd
+// Copyright 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
 
 import Foundation
 
