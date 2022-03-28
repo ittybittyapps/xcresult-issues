@@ -1,4 +1,4 @@
-// Copyright © 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
+// Copyright 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
 
 import XcresultIssues
 
@@ -10,4 +10,3 @@ struct MainApp {
         XcodeIssues.main()
     }
 }
-
