@@ -1,0 +1,22 @@
+name: Swift Lint
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: swiftlint-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SWIFTLINT_VERSION: latest
+  REPORTER: github-actions-logging
+
+jobs:
+  swiftlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Lint Swift Files"
+        run: |
+          docker run -v "$(pwd):$(pwd)" -w "$(pwd)" "ghcr.io/realm/swiftlint:${SWIFTLINT_VERSION}" \
+            swiftlint lint --strict --reporter "${REPORTER}"

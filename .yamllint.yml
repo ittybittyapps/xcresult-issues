@@ -1,0 +1,10 @@
+---
+extends: default
+ignore: |
+  /.build/
+  /.swiftpm/
+rules:
+  document-start: disable
+  line-length: disable
+  truthy: disable
+
