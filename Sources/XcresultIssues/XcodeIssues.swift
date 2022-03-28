@@ -13,7 +13,7 @@ public struct XcodeIssues: ParsableCommand {
 
     enum Format: String, Decodable, ExpressibleByArgument {
         case reviewdogJSON = "reviewdog-json"
-        case githubActions = "github-actions"
+        case githubActions = "github-actions-logging"
     }
 
     @Option(
