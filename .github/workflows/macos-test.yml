@@ -5,7 +5,11 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-    
+
+concurrency:
+  group: macos-test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-macos-macos-11-matrix:
     runs-on: macos-11
