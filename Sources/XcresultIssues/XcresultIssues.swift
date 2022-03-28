@@ -1,9 +1,9 @@
 // Copyright 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
+
 import ArgumentParser
 import Foundation
-// Copyright 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
 
-public struct XcodeIssues: ParsableCommand {
+public struct XcresultIssues: ParsableCommand {
     public static var configuration = CommandConfiguration(
         commandName: "xcresult-issues",
         abstract: "A utility for reporting issues found in xcresult bundles."
