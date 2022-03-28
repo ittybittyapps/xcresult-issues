@@ -29,7 +29,7 @@ struct GitHubActionsFormatStyle: FormatStyle {
         let line = value.location.range.start.line
         let column = value.location.range.start.column
 
-        return "::\(severity) file=\(file), line=\(line), col=\(column)::\(value.message)"
+        return "::\(severity) file=\(file),line=\(line),col=\(column)::\(value.message)"
     }
 
     /// If the format allows selecting a locale, returns a copy of this format with the new locale set. Default implementation returns an unmodified self.
