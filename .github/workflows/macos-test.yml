@@ -13,6 +13,7 @@ concurrency:
 jobs:
   build-macos-macos-11-matrix:
     runs-on: macos-11
+    timeout-minutes: 10
     strategy:
       matrix:
         xcode: ["13.2"]
