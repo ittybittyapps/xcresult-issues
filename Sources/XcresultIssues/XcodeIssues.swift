@@ -1,6 +1,7 @@
 // Copyright © 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
 import ArgumentParser
 import Foundation
+// Copyright 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
 
 public struct XcodeIssues: ParsableCommand {
     public static var configuration = CommandConfiguration(
@@ -102,4 +103,3 @@ extension Diagnostic {
         )
     }
 }
-
