@@ -7,6 +7,6 @@ import XcresultIssues
 @main
 struct MainApp {
     static func main() {
-        XcodeIssues.main()
+        XcresultIssues.main()
     }
 }
