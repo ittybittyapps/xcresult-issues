@@ -2,10 +2,6 @@
 
 import Foundation
 
-struct DiagnosticResult: Codable, Hashable {
-    var diagnostics: [Diagnostic]
-}
-
 struct Diagnostic: Codable, Hashable {
     struct Position: Codable, Hashable {
         var line: Int
@@ -30,6 +26,6 @@ struct Diagnostic: Codable, Hashable {
     }
 
     var message: String
-    var location: Location
+    var location: Location?
     var severity: Severity
 }
