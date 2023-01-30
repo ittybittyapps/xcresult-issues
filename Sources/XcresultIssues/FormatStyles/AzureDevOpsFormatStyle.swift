@@ -34,7 +34,7 @@ private struct VSODebugFormatStyle: FormatStyle {
     }
 
     func format(_ value: Diagnostic.Location) -> String {
-        return "\(value.file(relativeTo: pathsRelativeTo)):\(value.line):\(value.column): "
+        "\(value.file(relativeTo: pathsRelativeTo)):\(value.line):\(value.column): "
     }
 }
 

@@ -3,7 +3,7 @@
 import Foundation
 import os
 
-struct WarningsConfiguration: Decodable {    
+struct WarningsConfiguration: Decodable {
     struct Rule: Decodable {
         enum Action: String, Decodable {
             case suppress
