@@ -11,27 +11,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-macos-macos-11-matrix:
-    runs-on: macos-11
-    timeout-minutes: 10
-    strategy:
-      matrix:
-        xcode: ["13.2"]
-
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3.1.0
-      - name: Build
-        run: swift build -c release
-
   build-macos-macos-12-matrix:
     runs-on: macos-12
     timeout-minutes: 10
     strategy:
       matrix:
-        xcode: ["13.2"]
+        xcode: ["14.2"]
 
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
