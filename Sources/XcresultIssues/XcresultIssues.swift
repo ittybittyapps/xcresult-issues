@@ -37,6 +37,12 @@ public struct XcresultIssues: ParsableCommand {
     )
     var warningsConfig: String?
 
+    @Flag(
+        name: [.long, .short],
+        help: "Exit with a non-zero exit code if errors or test failures found."
+    )
+    var exitNonZeroOnError = false
+
     public init() {
     }
 
@@ -56,6 +62,10 @@ public struct XcresultIssues: ParsableCommand {
             Diagnostic(issueSummary: $0, severity: .error)
         } ?? []
 
+        let testFailureDiagnostics = invocationRecord.issues.testFailureSummaries?.values.compactMap {
+            Diagnostic(testFailure: $0, severity: .error)
+        } ?? []
+
         var warningDiagnostics = invocationRecord.issues.warningSummaries?.values.compactMap {
             Diagnostic(issueSummary: $0, severity: .warning)
         } ?? []
@@ -72,7 +82,7 @@ public struct XcresultIssues: ParsableCommand {
             warningDiagnostics.removeAll { $0.isConsideredError(by: warningsMatchers) }
         }
 
-        let allDiagnostics = chain(errorDiagnostics, warningDiagnostics)
+        let allDiagnostics = chain(errorDiagnostics, chain(warningDiagnostics, testFailureDiagnostics))
 
         switch format {
         case .reviewdogJSON:
@@ -91,6 +101,10 @@ public struct XcresultIssues: ParsableCommand {
                 print(diagnostic.formatted(.azureDevOps(pathsRelativeTo: pathsRelativeTo)), to: &outputstream)
             }
         }
+
+        if exitNonZeroOnError && (errorDiagnostics.isEmpty == false || testFailureDiagnostics.isEmpty == false) {
+            throw ExitCode.failure
+        }
     }
 
     private func loadWarningsConfiguration(path: String?) throws -> WarningsConfiguration? {
@@ -107,6 +121,14 @@ public struct XcresultIssues: ParsableCommand {
 }
 
 extension Diagnostic {
+    init?(testFailure: TestFailureIssueSummary, severity: Severity) {
+        self.init(
+            message: "\(testFailure.testCaseName.value): \(testFailure.message.value)",
+            location: .init(testFailure.documentLocationInCreatingWorkspace),
+            severity: severity
+        )
+    }
+
     init?(issueSummary: IssueSummary, severity: Severity) {
         self.init(
             message: issueSummary.message.value,
@@ -124,15 +146,17 @@ extension Diagnostic {
 
 extension Diagnostic.Location {
     init?(_ value: DocumentLocation?) {
-        guard let documentLocation = value, let startingLineNumber = documentLocation.startingLineNumber, let startingColumnNumber = documentLocation.startingColumnNumber else {
+        guard let documentLocation = value, let startingLineNumber = documentLocation.startingLineNumber else {
             return nil
         }
+
+        let startingColumnNumber = documentLocation.startingColumnNumber ?? 0
+        let endingColumnNumber = documentLocation.endingColumnNumber ?? 0
 
         // `DocumentLocation` uses zero-indexed line/column numbers, while rdjson uses 1-indexed line/column numbers.
         // Add 1 to each of the line/column numbers here to account for this.
         let endPosition: Diagnostic.Position?
-        if let endingLineNumber = documentLocation.endingLineNumber,
-           let endingColumnNumber = documentLocation.endingColumnNumber {
+        if let endingLineNumber = documentLocation.endingLineNumber {
             endPosition = .init(
                 line: endingLineNumber + 1,
                 column: endingColumnNumber + 1
