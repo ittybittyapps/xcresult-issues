@@ -1,7 +1,9 @@
 // Copyright 2022 Itty Bitty Apps Pty Ltd. See LICENSE file.
 
+import Algorithms
 import ArgumentParser
 import Foundation
+import Yams
 
 public struct XcresultIssues: ParsableCommand {
     public static var configuration = CommandConfiguration(
@@ -15,6 +17,7 @@ public struct XcresultIssues: ParsableCommand {
     enum Format: String, Decodable, ExpressibleByArgument {
         case reviewdogJSON = "reviewdog-json"
         case githubActions = "github-actions-logging"
+        case azureDevOps = "azure-devops-logging"
     }
 
     @Option(
@@ -28,10 +31,24 @@ public struct XcresultIssues: ParsableCommand {
     )
     var pathsRelativeTo: String?
 
+    @Option(
+        name: [.long, .short],
+        help: "A path to a YAML configuration for warnings."
+    )
+    var warningsConfig: String?
+
+    @Flag(
+        name: [.long, .short],
+        help: "Exit with a non-zero exit code if errors or test failures found."
+    )
+    var exitNonZeroOnError = false
+
     public init() {
     }
 
     public func run() throws {
+        let warningsConfiguration = try loadWarningsConfiguration(path: warningsConfig)
+
         let outputFileHandle = FileHandle.standardOutput
 
         let fileHandle = input.flatMap(FileHandle.init(forReadingAtPath:)) ?? .standardInput
@@ -41,44 +58,105 @@ public struct XcresultIssues: ParsableCommand {
         }
 
         let invocationRecord = try JSONDecoder().decode(ActionsInvocationRecord.self, from: fileData)
-        let errorDiagnostics = invocationRecord.issues.errorSummaries?.values.compactMap {
+        var errorDiagnostics = invocationRecord.issues.errorSummaries?.values.compactMap {
             Diagnostic(issueSummary: $0, severity: .error)
         } ?? []
 
-        let warningDiagnostics = invocationRecord.issues.warningSummaries?.values.compactMap {
+        let testFailureDiagnostics = invocationRecord.issues.testFailureSummaries?.values.compactMap {
+            Diagnostic(testFailure: $0, severity: .error)
+        } ?? []
+
+        var warningDiagnostics = invocationRecord.issues.warningSummaries?.values.compactMap {
             Diagnostic(issueSummary: $0, severity: .warning)
         } ?? []
-        let allDiagnostics = errorDiagnostics + warningDiagnostics
+
+        if let warningsMatchers = try warningsConfiguration?.ruleMatchers() {
+            warningDiagnostics.removeAll { $0.isSuppressed(by: warningsMatchers) }
+
+            let warningsAsErrors = warningDiagnostics
+                .filter { $0.isConsideredError(by: warningsMatchers) }
+                .map { $0.asError() }
+
+            errorDiagnostics.append(contentsOf: warningsAsErrors)
+
+            warningDiagnostics.removeAll { $0.isConsideredError(by: warningsMatchers) }
+        }
+
+        let allDiagnostics = chain(errorDiagnostics, chain(warningDiagnostics, testFailureDiagnostics))
 
         switch format {
         case .reviewdogJSON:
-            let result = DiagnosticResult(diagnostics: allDiagnostics)
+            let result = DiagnosticResult(diagnostics: Array(allDiagnostics))
             let jsonData = try JSONEncoder().encode(result)
             try outputFileHandle.write(contentsOf: jsonData)
 
         case .githubActions:
-            var outputstream = FileHandlerOutputStream(outputFileHandle)
+            var outputstream = FileHandleOutputStream(outputFileHandle)
             for diagnostic in allDiagnostics {
                 print(diagnostic.formatted(.githubActions(pathsRelativeTo: pathsRelativeTo)), to: &outputstream)
             }
+        case .azureDevOps:
+            var outputstream = FileHandleOutputStream(outputFileHandle)
+            for diagnostic in allDiagnostics {
+                print(diagnostic.formatted(.azureDevOps(pathsRelativeTo: pathsRelativeTo)), to: &outputstream)
+            }
         }
+
+        if exitNonZeroOnError && (errorDiagnostics.isEmpty == false || testFailureDiagnostics.isEmpty == false) {
+            throw ExitCode.failure
+        }
+    }
+
+    private func loadWarningsConfiguration(path: String?) throws -> WarningsConfiguration? {
+        guard let warningsConfiguration = path else {
+            return nil
+        }
+
+        let url = URL(fileURLWithPath: warningsConfiguration)
+        let data = try Data(contentsOf: url)
+        let decoder = YAMLDecoder()
+
+        return try decoder.decode(WarningsConfiguration.self, from: data)
     }
 }
 
 extension Diagnostic {
+    init?(testFailure: TestFailureIssueSummary, severity: Severity) {
+        self.init(
+            message: "\(testFailure.testCaseName.value): \(testFailure.message.value)",
+            location: .init(testFailure.documentLocationInCreatingWorkspace),
+            severity: severity
+        )
+    }
+
     init?(issueSummary: IssueSummary, severity: Severity) {
-        guard let location = issueSummary.documentLocationInCreatingWorkspace,
-              let startingLineNumber = location.startingLineNumber,
-              let startingColumnNumber = location.startingColumnNumber
-        else {
+        self.init(
+            message: issueSummary.message.value,
+            location: .init(issueSummary.documentLocationInCreatingWorkspace),
+            severity: severity
+        )
+    }
+
+    func asError() -> Self {
+        var copy = self
+        copy.severity = .error
+        return copy
+    }
+}
+
+extension Diagnostic.Location {
+    init?(_ value: DocumentLocation?) {
+        guard let documentLocation = value, let startingLineNumber = documentLocation.startingLineNumber else {
             return nil
         }
 
+        let startingColumnNumber = documentLocation.startingColumnNumber ?? 0
+        let endingColumnNumber = documentLocation.endingColumnNumber ?? 0
+
         // `DocumentLocation` uses zero-indexed line/column numbers, while rdjson uses 1-indexed line/column numbers.
         // Add 1 to each of the line/column numbers here to account for this.
-        let endPosition: Position?
-        if let endingLineNumber = location.endingLineNumber,
-           let endingColumnNumber = location.endingColumnNumber {
+        let endPosition: Diagnostic.Position?
+        if let endingLineNumber = documentLocation.endingLineNumber {
             endPosition = .init(
                 line: endingLineNumber + 1,
                 column: endingColumnNumber + 1
@@ -88,18 +166,14 @@ extension Diagnostic {
         }
 
         self.init(
-            message: issueSummary.message.value,
-            location: .init(
-                path: location.path,
-                range: .init(
-                    start: .init(
-                        line: startingLineNumber + 1,
-                        column: startingColumnNumber + 1
-                    ),
-                    end: endPosition
-                )
-            ),
-            severity: severity
+            path: documentLocation.path,
+            range: .init(
+                start: .init(
+                    line: startingLineNumber + 1,
+                    column: startingColumnNumber + 1
+                ),
+                end: endPosition
+            )
         )
     }
 }

@@ -7,3 +7,9 @@ extension Diagnostic {
         format.format(self)
     }
 }
+
+extension Diagnostic.Location {
+    func formatted<F>(_ format: F) -> F.FormatOutput where F: FormatStyle, F.FormatInput == Self {
+        format.format(self)
+    }
+}

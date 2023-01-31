@@ -1,0 +1,5 @@
+rules:
+  - regex: ^Main actor-isolated static property '(_previews|_platform)' cannot be used to satisfy nonisolated protocol requirement$
+    action: suppress
+  - regex: ^Cannot form key path that captures non-sendable type 'KeyPath<[\w\.]+, [\w\.]+>'$
+    action: suppress

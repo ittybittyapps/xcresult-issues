@@ -23,20 +23,31 @@ struct ActionsInvocationRecord: Decodable {
 }
 
  struct ResultIssueSummaries: Decodable {
+     var analyzerWarningSummaries: XcodeArray<IssueSummary>?
      var errorSummaries: XcodeArray<IssueSummary>?
-     var warningSummaries: XcodeArray<IssueSummary>?
      var testFailureSummaries: XcodeArray<TestFailureIssueSummary>?
+     var warningSummaries: XcodeArray<IssueSummary>?
 }
 
- struct IssueSummary: Decodable {
-     let documentLocationInCreatingWorkspace: DocumentLocation?
-     var message: XcodeObject<String>
+protocol IssueSummaryProtocol {
+    var documentLocationInCreatingWorkspace: DocumentLocation? { get set }
+    var message: XcodeObject<String> { get set }
+    var issueType: XcodeObject<String> { get set }
+    var producingTarget: XcodeObject<String>? { get set }
 }
 
- struct TestFailureIssueSummary: Decodable {
-     let documentLocationInCreatingWorkspace: DocumentLocation?
+struct IssueSummary: Decodable, IssueSummaryProtocol {
+     var documentLocationInCreatingWorkspace: DocumentLocation?
      var message: XcodeObject<String>
-     var producingTarget: XcodeObject<String>
+     var issueType: XcodeObject<String>
+     var producingTarget: XcodeObject<String>?
+}
+
+ class TestFailureIssueSummary: Decodable, IssueSummaryProtocol {
+     var documentLocationInCreatingWorkspace: DocumentLocation?
+     var message: XcodeObject<String>
+     var issueType: XcodeObject<String>
+     var producingTarget: XcodeObject<String>?
      var testCaseName: XcodeObject<String>
 }
 

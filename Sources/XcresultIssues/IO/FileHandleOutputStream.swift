@@ -2,7 +2,7 @@
 
 import Foundation
 
-struct FileHandlerOutputStream: TextOutputStream {
+struct FileHandleOutputStream: TextOutputStream {
     private let fileHandle: FileHandle
     let encoding: String.Encoding
 
